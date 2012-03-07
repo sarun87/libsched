@@ -37,7 +37,7 @@ void mythread_q_init(mythread_queue_t *headp, void *item)
 {
 	if(headp == NULL)
 	{
-		headp = malloc(sizeof(struct mythread_queue*));
+		//headp = malloc(sizeof(struct mythread_queue*));
 		mythread_queue_t newNode = malloc(sizeof(struct mythread_queue));
 		newNode->prev = NULL;
 		newNode->next = NULL;

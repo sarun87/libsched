@@ -3,6 +3,11 @@
  *
  */
 
+struct sched_param
+{
+	int __sched_priority;
+};
+
 /*
  * mythread_scheduler
  */

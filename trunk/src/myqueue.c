@@ -1,3 +1,4 @@
+#include <stdbool.h>
 #include "myqueue.h"
 
 mythread_queue_t mythread_ready= NULL;

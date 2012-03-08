@@ -228,10 +228,3 @@ int mythread_yield(void);
 int mythread_join(mythread_t target_thread, void **status);
 
 #endif /* MYTHREAD_H */
-
-
-
-
-
-
-

@@ -2,11 +2,23 @@
  * mysched.h -- a header for implementation of thread scheduler
  *
  */
+#ifndef MYSCHED_H
+#define MYSCHED_H
+
+#include "mythread.h"
+
+#include <signal.h>
+#include <sys/time.h>
 
 struct sched_param
 {
 	int __sched_priority;
 };
+
+int _isInit;
+
+//Original signal handlers for SIGUSR1 and SIGALRM
+struct sigaction oldUserHandler,oldAlarmHandler;
 
 /*
  * mythread_scheduler
@@ -61,4 +73,6 @@ int mythread_attr_getschedparam(const mythread_attr_t *attr,
  */
 int mythread_attr_setschedparam(mythread_attr_t *attr,
 		const struct sched_param *param);
+
+#endif
 

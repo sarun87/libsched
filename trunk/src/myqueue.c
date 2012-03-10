@@ -1,9 +1,6 @@
 #include <stdbool.h>
 #include "myqueue.h"
 
-mythread_queue_t mythread_ready= NULL;
-mythread_queue_t mythread_run = NULL;
-
 mythread_queue_t getMaxPriorityThread(mythread_queue_t *headp)
 {
 	int highest = 999;
@@ -13,11 +10,16 @@ mythread_queue_t getMaxPriorityThread(mythread_queue_t *headp)
 		return NULL;
 	}
 	while(iter->next!=NULL)
-	{
-		if(((iter->item)->attribute)->attr < highest)
+	{	
+		int threadPriority = DEFAULT_ATTR;
+		if((iter->item)->attribute == NULL)
+		{
+			threadPriority = ((iter->item)->attribute)->attr;
+		}
+		if(threadPriority < highest)
 		{
 			highestPriorityItem = iter;
-			highest = ((iter->item)->attribute)->attr;
+			highest = threadPriority;
 		}
 		iter = iter->next;
 	}
@@ -89,24 +91,37 @@ void mythread_deq(mythread_queue_t *headp, void *item)
 {
 	mythread_queue_t iter;
 	iter = *headp;
-	if(iter == NULL)
+	while(iter!=NULL)
 	{
-		item = NULL;
-		return;
-	}
-	while(iter->next != NULL)
-	{
+		if(iter->item == item)
+		{
+			// If it's the first element
+			if(iter == *headp){
+				(*headp) = (*headp)->next;
+				(*headp)->prev = NULL;
+			}
+			// last element of queue
+			else if(iter->next == NULL)
+			{
+				(iter->prev)->next = NULL;
+			}
+			// Middle element of queue
+			else
+			{
+				(iter->prev)->next = iter->next;
+				(iter->next)->prev = iter->prev;
+			}
+			free(iter);
+			break;
+		}
 		iter = iter->next;
 	}
-	item = iter->item;
-	(iter->prev)->next = NULL;
-	free(iter);
 }
 
 /* Dequeue item by priority */
 void *mythread_deq_prio(mythread_queue_t *headp)
 {
-	void *highestPriorityItem = NULL;
+	mythread_queue_t highestPriorityItem = NULL;
 	void *returnValue = NULL;
 	
 	highestPriorityItem = getMaxPriorityThread(headp);
@@ -115,19 +130,7 @@ void *mythread_deq_prio(mythread_queue_t *headp)
 	{
 		return NULL;
 	}
-
-	(highestPriorityItem->prev)->next = highestPriorityItem->next;
-	(highestPriorityItem->next)->prev = highestPriorityItem->prev;
-
-	returnValue = highestPriorityItem->item;
-
-	if(highestPriorityItem->next == NULL && highestPriorityItem->prev == NULL)
-	{
-		// Only node in the queue
-		*headp = NULL;
-	}
-	free(highestPriorityItem);
-
+	returnValue = (void*) highestPriorityItem->item;
 	return returValue;
 }
 

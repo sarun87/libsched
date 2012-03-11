@@ -92,22 +92,25 @@ void mythread_init_sched(void)
 	{
 		struct sigaction userHandler,alarmHandler;
 		struct itimerval value;
+		sigset_t userSignalSet,alarmSignalSet;
 
-		sigemptyset(&userHandler.sa_mask);
-		sigemptyset(&alarmHandler.sa_mask);
+		sigemptyset(&userSignalSet);
+		sigemptyset(&alarmSignalSet);
 
 		userHandler.sa_flags = 0;
 		alarmHandler.sa_flags = 0;
-
-		//userHandler.sa_handler = preEmptorFunction;
-		//alarmHandler.sa_handler = alarmHandlerFunction;
 
 		userHandler.sa_sigaction = mythread_sighandler;
 		alarmHandler.sa_sigaction = mythread_sighandler;
 
 		//Take backups
+		//Need to take backups of sigset_t's also?
+		//TODO: Shouldn't this be outside the _isInit?
 		sigaction(SIGUSR1,NULL,oldUserHandler);
 		sigaction(SIGALRM,NULL,oldAlarmHandler);
+		
+		sigaddset(SIGALRM,&alarmSignalSet);
+		sigaddset(SIGUSR1,&userSignalSet);
 
 		sigaction(SIGUSR1,userHandler,NULL);
 		sigaction(SIGALRM,alarmHandler,NULL);

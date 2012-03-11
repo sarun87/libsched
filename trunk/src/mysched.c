@@ -48,6 +48,10 @@ int mythread_scheduler()
 				if((highestPrio->attribute)->attr  <= (mytcb->attribute)->attr){
 				// Preempt this thread.
 					printf("\nReceived signal. Switching ID:%d with %d\n",mytcb->tid,highestPrio->tid);
+					printf("\nReadyQueue - ");
+					printQueue(&readyQueue);
+					printf("\nRunQueue - ");
+					printQueue(mythread_runq());
 					mythread_block(&readyQueue, 0);
 					return 0;
 				}
@@ -128,45 +132,37 @@ static void mythread_sighandler(int sig, siginfo_t *siginfo, void *ucp)
 }
 void mythread_init_sched(void)
 {
-	if(mythread_self() == NULL)
-	{
-		//printf("\nInit Called by main");
-	}
-	else
-	{	
-		//printf("\nInit sched called by:%d",mythread_self()->tid);
-	}
-		struct sigaction userHandler,alarmHandler;
-		struct itimerval value;
-		//sigset_t userSignalSet,alarmSignalSet;
-		sigset_t signalSet;
+	struct sigaction userHandler,alarmHandler;
+	struct itimerval value;
+	//sigset_t userSignalSet,alarmSignalSet;
+	sigset_t signalSet;
 
-		//sigemptyset(&userSignalSet);
-		//sigemptyset(&alarmSignalSet);
-		sigemptyset(&signalSet);
+	//sigemptyset(&userSignalSet);
+	//sigemptyset(&alarmSignalSet);
+	sigemptyset(&signalSet);
 
-		userHandler.sa_flags = 0;
-		alarmHandler.sa_flags = 0;
+	userHandler.sa_flags = 0;
+	alarmHandler.sa_flags = 0;
 
-		userHandler.sa_sigaction = mythread_sighandler;
-		alarmHandler.sa_sigaction = mythread_sighandler;
+	userHandler.sa_sigaction = mythread_sighandler;
+	alarmHandler.sa_sigaction = mythread_sighandler;
 
-		//Take backups
-		//Need to take backups of sigset_t's also?
-		//TODO: Shouldn't this be outside the _isInit?
-		sigaction(SIGUSR1,NULL,&oldUserHandler);
-		sigaction(SIGALRM,NULL,&oldAlarmHandler);
-		
-		//sigaddset(&alarmSignalSet,SIGALRM);
-		//sigaddset(&userSignalSet,SIGUSR1);
+	//Take backups
+	//Need to take backups of sigset_t's also?
+	//TODO: Shouldn't this be outside the _isInit?
+	sigaction(SIGUSR1,NULL,&oldUserHandler);
+	sigaction(SIGALRM,NULL,&oldAlarmHandler);
+	
+	//sigaddset(&alarmSignalSet,SIGALRM);
+	//sigaddset(&userSignalSet,SIGUSR1);
 
-		sigaddset(&signalSet,SIGALRM);
-		sigaddset(&signalSet,SIGUSR1);
-		
-		sigaction(SIGUSR1,&userHandler,NULL);
-		sigaction(SIGALRM,&alarmHandler,NULL);
-		
-		sigprocmask(SIG_UNBLOCK, &signalSet,NULL);
+	sigaddset(&signalSet,SIGALRM);
+	sigaddset(&signalSet,SIGUSR1);
+	
+	sigaction(SIGUSR1,&userHandler,NULL);
+	sigaction(SIGALRM,&alarmHandler,NULL);
+	
+	sigprocmask(SIG_UNBLOCK, &signalSet,NULL);
 	if(_isInit == 0)
 	{
 		value.it_interval.tv_sec = 0;

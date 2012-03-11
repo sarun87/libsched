@@ -28,4 +28,5 @@ void mythread_deq(mythread_queue_t *headp, void *item);
 /* Dequeue item by priority */
 void *mythread_deq_prio(mythread_queue_t *headp);
 
+void printQueue(mythread_queue_t *headp);
 #endif /* MYQUEUE_H */

@@ -1,20 +1,23 @@
 #include <stdbool.h>
 #include "myqueue.h"
+#include "mythread.h"
 
 mythread_queue_t getMaxPriorityThread(mythread_queue_t *headp)
 {
 	int highest = 999;
 	mythread_queue_t iter = *headp;
+	mythread_queue_t highestPriorityItem = NULL;
 	if(*headp == NULL)
 	{
+		printf("\nQueue Empty!!\n");
 		return NULL;
 	}
-	while(iter->next!=NULL)
+	while(iter!=NULL)
 	{	
 		int threadPriority = DEFAULT_ATTR;
-		if((iter->item)->attribute == NULL)
+		if(((mythread_t)iter->item)->attribute == NULL)
 		{
-			threadPriority = ((iter->item)->attribute)->attr;
+			threadPriority = (((mythread_t)iter->item)->attribute)->attr;
 		}
 		if(threadPriority < highest)
 		{
@@ -32,13 +35,13 @@ int getIntMaxPriorityThread(mythread_queue_t *headp)
 	if(highestPriorityItem == NULL)
 		return -1;
 	else
-		return ((highestPriorityItem->item)->attribute)->attr;
+		return (((mythread_t)highestPriorityItem->item)->attribute)->attr;
 }
 
 /* Initialize the queue */
 void mythread_q_init(mythread_queue_t *headp, void *item)
 {
-	if(headp == NULL)
+	if(*headp == NULL)
 	{
 		//headp = malloc(sizeof(struct mythread_queue*));
 		mythread_queue_t newNode = malloc(sizeof(struct mythread_queue));
@@ -46,13 +49,11 @@ void mythread_q_init(mythread_queue_t *headp, void *item)
 		newNode->next = NULL;
 		newNode->item = item;
 		*headp = newNode;
-		return 0;
 	}
 	else
 	{
 		printf("\nError!! Re-initialization of already initialized queue!");
 	}
-	return -1;
 }
 
 /* Test if item in Q, return TRUE if so, FALSE o/w */
@@ -76,6 +77,7 @@ void mythread_enq(mythread_queue_t *headp, void *item){
 	mythread_queue_t newNode = malloc(sizeof(struct mythread_queue));
 	newNode->item = item;
 	newNode->prev = NULL;
+	newNode->next = NULL;
 	if(*headp == NULL)
 		*headp = newNode;
 	else
@@ -98,7 +100,11 @@ void mythread_deq(mythread_queue_t *headp, void *item)
 			// If it's the first element
 			if(iter == *headp){
 				(*headp) = (*headp)->next;
-				(*headp)->prev = NULL;
+				// If item is not the only element in the queue
+				if((*headp) !=NULL){
+					// Set the prev pointer to null.
+					(*headp)->prev = NULL;
+				}
 			}
 			// last element of queue
 			else if(iter->next == NULL)
@@ -128,9 +134,10 @@ void *mythread_deq_prio(mythread_queue_t *headp)
 
 	if(highestPriorityItem == NULL)
 	{
+		printf("\nReturning NULL\n");
 		return NULL;
 	}
 	returnValue = (void*) highestPriorityItem->item;
-	return returValue;
+	return returnValue;
 }
 

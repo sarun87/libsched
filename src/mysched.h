@@ -10,15 +10,12 @@
 #include <signal.h>
 #include <sys/time.h>
 
-struct sched_param
+/*struct sched_param
 {
 	int __sched_priority;
-};
+};*/
 
-int _isInit;
 
-//Original signal handlers for SIGUSR1 and SIGALRM
-struct sigaction oldUserHandler,oldAlarmHandler;
 
 /*
  * mythread_scheduler

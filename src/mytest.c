@@ -23,16 +23,18 @@ void* threadFun(void * arg)
 
 int main()
 {
-	mythread_t tid[10];
+	mythread_t tid[20];
 	int i;
-	mythread_attr_t attr[10];
+	mythread_attr_t attr[20];
+	mythread_setconcurrency(2);
 
-	for(i = 0; i < 10; ++i)
+	for(i = 0; i < 20; ++i)
 	{
 		mythread_attr_init(&attr[i]);
 		mythread_create(&tid[i],&attr[i], threadFun,i);	
+		printf("Tester:created thread %d\n",tid[i]->tid);
 	}
-	for(i = 0; i < 10; ++i)
+	for(i = 0; i < 20; ++i)
 	{
 		mythread_join(tid[i],NULL);
 	}

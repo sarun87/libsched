@@ -2,6 +2,24 @@
 #include "myqueue.h"
 #include "mythread.h"
 
+void printQueue(mythread_queue_t *headp)
+{
+	mythread_queue_t curr = *headp;
+
+	if(*headp == NULL)
+	{
+		printf("\nQueue Empty!!\n");
+		return;
+	}
+	while (curr != NULL)
+	{
+		printf("%d (%d) --> ",((mythread_t)curr->item)->tid,((mythread_t)curr->item)->state);
+		curr = curr->next;
+
+	}
+	printf("END\n");
+}
+
 mythread_queue_t getMaxPriorityThread(mythread_queue_t *headp)
 {
 	int highest = 999;
@@ -15,7 +33,7 @@ mythread_queue_t getMaxPriorityThread(mythread_queue_t *headp)
 	while(iter!=NULL)
 	{	
 		int threadPriority = DEFAULT_ATTR;
-		if(((mythread_t)iter->item)->attribute == NULL)
+		if(((mythread_t)iter->item)->attribute != NULL)
 		{
 			threadPriority = (((mythread_t)iter->item)->attribute)->attr;
 		}

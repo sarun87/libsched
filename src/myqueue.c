@@ -13,7 +13,14 @@ void printQueue(mythread_queue_t *headp)
 	}
 	while (curr != NULL)
 	{
-		printf("%d (%d) --> ",((mythread_t)curr->item)->tid,((mythread_t)curr->item)->state);
+		if(((mythread_t)curr->item)->attribute == NULL)
+		{
+			printf("%d (%d) --> ",((mythread_t)curr->item)->tid,10);
+		}
+		else
+		{
+			printf("%d (%d) --> ",((mythread_t)curr->item)->tid,((mythread_t)curr->item)->attribute->attr);
+		}
 		curr = curr->next;
 
 	}
@@ -100,9 +107,28 @@ void mythread_enq(mythread_queue_t *headp, void *item){
 		*headp = newNode;
 	else
 	{
-		newNode->next = *headp;
-		(*headp)->prev = newNode;
-		(*headp) = newNode;
+		mythread_queue_t iter = *headp;
+		while(iter->next !=NULL)
+		{
+			iter = iter->next;
+		}
+		iter->next = newNode;
+		newNode->prev = iter;
+	}
+	if(*headp == *mythread_readyq())
+	{
+		printf("\nEnqueued in ready queue. Queue:");
+		printQueue(headp);
+	}
+	else if(*headp == *mythread_runq())
+	{
+		printf("\nEnqueued in run queue. Queue:");
+		printQueue(headp);
+	}
+	else
+	{
+		printf("\nEnqueued in some other queue");
+		printQueue(headp);
 	}
 }
 

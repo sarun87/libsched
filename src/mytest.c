@@ -41,8 +41,9 @@ int main()
 	int i;
 	struct sched_param param;
 	mythread_attr_t attr[20];
-	mythread_setconcurrency(1);
+	mythread_setconcurrency(2);
 	mythread_mutex_init(&m);
+	printf("\nStarted MainThread ID:%d",getpid());
 	for(i = 0; i < 20; ++i)
 	{
 		param.__sched_priority = (i%2 ==0 ?  i:3);
@@ -60,6 +61,6 @@ int main()
 		//	break;
 	}
 	printf("\nSum = %d",sum);
-	printStuff();
+	printBothQueues();
 	return 0;
 }

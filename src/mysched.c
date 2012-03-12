@@ -4,6 +4,9 @@
 #include "mythread.h"
 int _isInit;
 
+
+void printBothQueues();
+
 //Original signal handlers for SIGUSR1 and SIGALRM
 struct sigaction oldUserHandler,oldAlarmHandler;
 
@@ -57,6 +60,9 @@ int mythread_scheduler()
 					//printQueue(&readyQueue);
 					//printf("\nRunQueue - ");
 					//printQueue(mythread_runq());
+					printf("\nReceived signal. Switching ID:%d with %d\n",mytcb->tid,highestPrio->tid);
+					printf("\nmythread_scheduler:");
+					printBothQueues();					
 					mythread_block(mythread_runq(), 1);
 					return 0;
 				}
@@ -109,20 +115,24 @@ static void mythread_sighandler(int sig, siginfo_t *siginfo, void *ucp)
 			return;
 		}
 	*/
-		if(sig == SIGALRM)
+		if (mytcb == NULL)
 		{
+			printf("\nERROR:Couldn't get tcb!\n");
+			exit(-1);
+		}
+		//if(sig == SIGALRM)
+		//{
 		//	printf("\nThread ID: %d got SIGALRM", mythread_self()->tid);
-		}
-		else if(sig == SIGUSR1)
-		{
-			//printf("\nThread ID: %d got SIGUSR1\n",mythread_self()->tid);			
-			//printStuff();
-		}
+		//}
+		//else if(sig == SIGUSR1)
+		//{
+		//	printf("\nThread ID: %d got SIGUSR1\n",mytcb->tid);
+		//}
 		//printf("\nReadyqueue:=");printQueue(mythread_readyq());
 		//printf("\nRunqueue:-");printQueue(mythread_runq());
 		//qCount++;
 		//if(qCount ==4)
-		//	exit(0);
+		//	exit(0);		
 		if(mythread_tryenter_kernel() == true)
 		{
 			int present = false;
@@ -175,47 +185,42 @@ static void mythread_sighandler(int sig, siginfo_t *siginfo, void *ucp)
 		}
 	//	setitimer(ITIMER_REAL,&value,NULL);
 }
+
+struct sigaction userHandler,alarmHandler;
+sigset_t signalSet,oldSet;
+
 void mythread_init_sched(void)
 {
-
-	struct sigaction userHandler;
-	//sigset_t userSignalSet,alarmSignalSet;
 	struct itimerval timer;
 	struct timeval timerval;
-	//struct itimerval value;
-	sigset_t signalSet;
 
+
+	userHandler.sa_flags = 0;
+	alarmHandler.sa_flags = 0;
+
+	userHandler.sa_sigaction = mythread_sighandler;
+	alarmHandler.sa_sigaction = mythread_sighandler;
+
+	//Take backups
+	sigaction(SIGUSR1,NULL,&oldUserHandler);
+	sigaction(SIGALRM,NULL,&oldAlarmHandler);
+	
 	sigemptyset(&signalSet);
 	sigaddset(&signalSet,SIGALRM);
 	sigaddset(&signalSet,SIGUSR1);
-	sigprocmask(SIG_UNBLOCK, &signalSet,NULL);
 	
-	userHandler.sa_flags = SA_RESTART;
-
-	userHandler.sa_sigaction = mythread_sighandler;
-
-	sigemptyset(&userHandler.sa_mask);
-	sigaddset(&userHandler.sa_mask,SIGALRM);
-	sigaddset(&userHandler.sa_mask,SIGUSR1);
-	//Take backups
-	//Need to take backups of sigset_t's also?
-	//TODO: Shouldn't this be outside the _isInit?
-	if(sigaction(SIGUSR1,&userHandler,&oldUserHandler) == -1)
+	if (sigaction(SIGUSR1,&userHandler,NULL) == -1)
 	{
-		printf("\nError!");
+		printf("\nERROR:Failed to set SIGUSR1 for thread %d\n",mythread_self()->tid);
+		exit(-1);
+	}
+	if (sigaction(SIGALRM,&alarmHandler,NULL) == -1)
+	{
+		printf("\nERROR:Failed to set SIGALRM for thread %d\n",mythread_self()->tid);
+		exit(-1);
 	}
 	
-	if(sigaction(SIGALRM,&userHandler,&oldUserHandler) == -1)
-	{
-		printf("\nError!");
-	}
-
-	//sigaddset(&alarmSignalSet,SIGALRM);
-	//sigaddset(&userSignalSet,SIGUSR1);
-
-	//sigaddset(&signalSet,SIGALRM);
-	//sigaddset(&signalSet,SIGUSR1);
-	
+	sigprocmask(SIG_UNBLOCK, &signalSet,&oldSet);
 	if(_isInit == 0)
 	{
 		timerval.tv_sec = 1;
@@ -231,17 +236,19 @@ void mythread_init_sched(void)
 void mythread_exit_sched(void)
 {
 	//Restore the signal handlers.
-	if (_isInit = 1)
-	{
-		sigaction(SIGUSR1,&oldUserHandler,NULL);
-		sigaction(SIGALRM,&oldAlarmHandler,NULL);
-		_isInit = 0;
-	}
+	sigaction(SIGUSR1,&oldUserHandler,NULL);
+	sigaction(SIGALRM,&oldAlarmHandler,NULL);
+	sigprocmask(SIG_SETMASK, &oldSet,&signalSet);
+	printf("\nmythread_exit_sched:");
+	//printBothQueues();*/
+
 }
 
-void printStuff(){
-	printf("\nReady Queue::\n");
+void printBothQueues()
+{
+
+	printf("\nReadyQueue - ");
 	printQueue(mythread_readyq());
-	printf("\nRun Queue::\n");
+	printf("\nRunQueue - ");
 	printQueue(mythread_runq());
 }

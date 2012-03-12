@@ -18,12 +18,28 @@ void* threadFun(void * arg)
 	//printf("\nStill working ID:%d",mythread_self()->tid);
 	for(i =0; i < 99999; ++i);	
 	//sleep(2);
-	//while(1)
+//	while(1)
 //	{
 //		;//printf("Infinite!!");
 //	}
-	//printStuff();
+//	i
+	for(i = 0; i < 60000; ++i)
+	{
+		int j;
+		for(j=0;j<200; ++j)
+		{
+			/*int k;
+			for(k=0; k<99999; ++k)
+			{
+				int l;
+				for(l=0; l < 99999; ++l);
+			}*/
+		}
+	}
+	mythread_mutex_lock(&m);
 	printStuff();
+	mythread_mutex_unlock(&m);
+	//printStuff();
 	//printf("\nStill working ID:%d",mythread_self()->tid);
 	for(i =0; i < 99999; ++i);
 	//printf("\nStill working ID:%d",mythread_self()->tid);
@@ -41,12 +57,12 @@ int main()
 	int i;
 	struct sched_param param;
 	mythread_attr_t attr[20];
-	mythread_setconcurrency(2);
+	mythread_setconcurrency(3);
 	mythread_mutex_init(&m);
-	printf("\nStarted MainThread ID:%d",getpid());
 	for(i = 0; i < 20; ++i)
 	{
-		param.__sched_priority = (i%2 ==0 ?  i:3);
+		//param.__sched_priority = (i%2 ==0 ?  i:3);
+		param.__sched_priority = 10;
 		mythread_attr_init(&attr[i]);
 		mythread_attr_setschedparam(&attr[i],&param);
 		mythread_create(&tid[i],&attr[i], threadFun,i);
@@ -54,13 +70,15 @@ int main()
 		//	break;	
 		printf("Tester:created thread %d\n",tid[i]->tid);
 	}
+	//printStuff();
 	for(i = 0; i < 20; ++i)
 	{
-		mythread_join(tid[i],NULL);
+	mythread_join(tid[i],NULL);
 		if(i==5);
 		//	break;
 	}
+//	mythread_exit(NULL);
 	printf("\nSum = %d",sum);
-	printBothQueues();
+	//printStuff();
 	return 0;
 }

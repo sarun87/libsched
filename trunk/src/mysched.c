@@ -45,14 +45,19 @@ int mythread_scheduler()
 					(mytcb->attribute) = malloc(sizeof(mythread_attr_t));
 					(mytcb->attribute)->attr = DEFAULT_ATTR;
 				}
+				if(highestPrio->attribute == NULL)
+				{
+					highestPrio->attribute = malloc(sizeof(mythread_attr_t));
+					highestPrio->attribute->attr = DEFAULT_ATTR;
+				}
 				if((highestPrio->attribute)->attr  <= (mytcb->attribute)->attr){
 				// Preempt this thread.
-					printf("\nReceived signal. Switching ID:%d with %d\n",mytcb->tid,highestPrio->tid);
-					printf("\nReadyQueue - ");
-					printQueue(&readyQueue);
-					printf("\nRunQueue - ");
-					printQueue(mythread_runq());
-					mythread_block(&readyQueue, 0);
+					//printf("\nReceived signal. Switching ID:%d with %d",mytcb->tid,highestPrio->tid);
+					//printf("\nReadyQueue - ");
+					//printQueue(&readyQueue);
+					//printf("\nRunQueue - ");
+					//printQueue(mythread_runq());
+					mythread_block(mythread_runq(), 1);
 					return 0;
 				}
 			}
@@ -75,12 +80,15 @@ void mythread_leave_kernel()
 		mythread_leave_kernel_nonpreemptive();
 	}
 }
-
+static int qCount = 0;
 static void mythread_sighandler(int sig, siginfo_t *siginfo, void *ucp)
 {
 		mythread_t mytcb = mythread_self();
 		struct itimerval value;
-	//	getitimer(ITIMER_REAL,&value);
+		getitimer(ITIMER_REAL,&value);
+		printf("\nThread Woken up is:%d",mythread_self()->tid);
+		//printStuff();
+		return;
 		
 		// If main gets the alarm, send it to all threads on run queue.
 		/*if(mytcb == NULL)
@@ -101,14 +109,47 @@ static void mythread_sighandler(int sig, siginfo_t *siginfo, void *ucp)
 	*/
 		if(sig == SIGALRM)
 		{
-			printf("\nThread ID: %d got SIGALRM", mythread_self()->tid);
+			//printf("\nThread ID: %d got SIGALRM", mythread_self()->tid);
 		}
 		else if(sig == SIGUSR1)
 		{
 			//printf("\nThread ID: %d got SIGUSR1\n",mythread_self()->tid);
 		}
+		//printf("\nReadyqueue:=");printQueue(mythread_readyq());
+		//printf("\nRunqueue:-");printQueue(mythread_runq());
+		//qCount++;
+		//if(qCount ==4)
+		//	exit(0);
 		if(mythread_tryenter_kernel() == true)
 		{
+			int present = false;
+			mythread_queue_t runQueueIter2 = *mythread_runq();
+			while(runQueueIter2!=NULL)
+			{ 
+				if(runQueueIter2->item == mytcb){
+					present = true;	//tgkill(-1, ((mythread_t)runQueueIter->item)->tid,SIGUSR1);
+					break;
+				}
+				runQueueIter2 = runQueueIter2->next;
+			}
+			if(present == false)
+			{
+				//printf("\nNON-RUN Thread Woken UP!!!");
+				mythread_leave_kernel_nonpreemptive();
+				runQueueIter2 = *mythread_runq();
+				while(runQueueIter2!=NULL)
+				{ 
+					if(runQueueIter2->item != mytcb){
+					//tgkill(-1, ((mythread_t)runQueueIter->item)->tid,SIGUSR1);
+						syscall(SYS_tkill, ((mythread_t)runQueueIter2->item)->tid, SIGUSR1);
+					}
+					runQueueIter2 = runQueueIter2->next;
+				}
+			}
+			else{
+			
+			
+			mytcb->reschedule = 1;
 			// Send signal to all threads in run q
 			mythread_queue_t runQueueIter = *mythread_runq();
 			while(runQueueIter!=NULL)
@@ -122,6 +163,7 @@ static void mythread_sighandler(int sig, siginfo_t *siginfo, void *ucp)
 			mytcb->reschedule = 1;
 			// Call scheduler
 			mythread_scheduler();
+			}
 		}
 		else
 		{
@@ -184,4 +226,11 @@ void mythread_exit_sched(void)
 		sigaction(SIGALRM,&oldAlarmHandler,NULL);
 		_isInit = 0;
 	}
+}
+
+void printStuff(){
+	printf("\nReady Queue::\n");
+	printQueue(mythread_readyq());
+	printf("\nRun Queue::\n");
+	printQueue(mythread_runq());
 }

@@ -72,6 +72,7 @@ void mythread_leave_kernel()
 	mythread_t mytcb = mythread_self();
 	if(mytcb->reschedule == 1)
 	{
+		printf("\nIM HERE!!!!!!!!!!!!!!!!!!!!!");
 		mytcb->reschedule = 0;
 		mythread_scheduler();
 	}
@@ -86,9 +87,10 @@ static void mythread_sighandler(int sig, siginfo_t *siginfo, void *ucp)
 		mythread_t mytcb = mythread_self();
 		struct itimerval value;
 		getitimer(ITIMER_REAL,&value);
-		printf("\nThread Woken up is:%d",mythread_self()->tid);
+		//printf("\nThread Woken up is:%d",mythread_self()->tid);
 		//printStuff();
-		return;
+		//printStuff();
+		//return;
 		
 		// If main gets the alarm, send it to all threads on run queue.
 		/*if(mytcb == NULL)
@@ -109,11 +111,12 @@ static void mythread_sighandler(int sig, siginfo_t *siginfo, void *ucp)
 	*/
 		if(sig == SIGALRM)
 		{
-			//printf("\nThread ID: %d got SIGALRM", mythread_self()->tid);
+		//	printf("\nThread ID: %d got SIGALRM", mythread_self()->tid);
 		}
 		else if(sig == SIGUSR1)
 		{
-			//printf("\nThread ID: %d got SIGUSR1\n",mythread_self()->tid);
+			//printf("\nThread ID: %d got SIGUSR1\n",mythread_self()->tid);			
+			//printStuff();
 		}
 		//printf("\nReadyqueue:=");printQueue(mythread_readyq());
 		//printf("\nRunqueue:-");printQueue(mythread_runq());
@@ -174,45 +177,53 @@ static void mythread_sighandler(int sig, siginfo_t *siginfo, void *ucp)
 }
 void mythread_init_sched(void)
 {
-	struct sigaction userHandler,alarmHandler;
-	struct itimerval value;
+
+	struct sigaction userHandler;
 	//sigset_t userSignalSet,alarmSignalSet;
+	struct itimerval timer;
+	struct timeval timerval;
+	//struct itimerval value;
 	sigset_t signalSet;
 
-	//sigemptyset(&userSignalSet);
-	//sigemptyset(&alarmSignalSet);
 	sigemptyset(&signalSet);
-
-	userHandler.sa_flags = 0;
-	alarmHandler.sa_flags = 0;
+	sigaddset(&signalSet,SIGALRM);
+	sigaddset(&signalSet,SIGUSR1);
+	sigprocmask(SIG_UNBLOCK, &signalSet,NULL);
+	
+	userHandler.sa_flags = SA_RESTART;
 
 	userHandler.sa_sigaction = mythread_sighandler;
-	alarmHandler.sa_sigaction = mythread_sighandler;
 
+	sigemptyset(&userHandler.sa_mask);
+	sigaddset(&userHandler.sa_mask,SIGALRM);
+	sigaddset(&userHandler.sa_mask,SIGUSR1);
 	//Take backups
 	//Need to take backups of sigset_t's also?
 	//TODO: Shouldn't this be outside the _isInit?
-	sigaction(SIGUSR1,NULL,&oldUserHandler);
-	sigaction(SIGALRM,NULL,&oldAlarmHandler);
+	if(sigaction(SIGUSR1,&userHandler,&oldUserHandler) == -1)
+	{
+		printf("\nError!");
+	}
 	
+	if(sigaction(SIGALRM,&userHandler,&oldUserHandler) == -1)
+	{
+		printf("\nError!");
+	}
+
 	//sigaddset(&alarmSignalSet,SIGALRM);
 	//sigaddset(&userSignalSet,SIGUSR1);
 
-	sigaddset(&signalSet,SIGALRM);
-	sigaddset(&signalSet,SIGUSR1);
+	//sigaddset(&signalSet,SIGALRM);
+	//sigaddset(&signalSet,SIGUSR1);
 	
-	sigaction(SIGUSR1,&userHandler,NULL);
-	sigaction(SIGALRM,&alarmHandler,NULL);
-	
-	sigprocmask(SIG_UNBLOCK, &signalSet,NULL);
 	if(_isInit == 0)
 	{
-		value.it_interval.tv_sec = 0;
-		value.it_interval.tv_usec = 10000;
-		value.it_value.tv_sec = 0;
-		value.it_value.tv_usec = 10000;
-
-		setitimer(ITIMER_REAL,&value,NULL);
+		timerval.tv_sec = 1;
+		timerval.tv_usec = 0;
+		timer.it_interval = timerval;
+		timer.it_value = timerval;
+		setitimer(ITIMER_REAL, &timer, NULL);
+		//setitimer(ITIMER_REAL,&value,NULL);
 		_isInit = 1;
 	}
 }

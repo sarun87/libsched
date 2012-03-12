@@ -8,7 +8,7 @@ void printQueue(mythread_queue_t *headp)
 
 	if(*headp == NULL)
 	{
-		printf("\nQueue Empty!!\n");
+		//printf("\nQueue Empty!!\n");
 		return;
 	}
 	while (curr != NULL)
@@ -34,7 +34,7 @@ mythread_queue_t getMaxPriorityThread(mythread_queue_t *headp)
 	mythread_queue_t highestPriorityItem = NULL;
 	if(*headp == NULL)
 	{
-		printf("\nQueue Empty!!\n");
+		//printf("\n--ERROR--Queue Empty!!\n");
 		return NULL;
 	}
 	while(iter!=NULL)
@@ -77,7 +77,7 @@ void mythread_q_init(mythread_queue_t *headp, void *item)
 	}
 	else
 	{
-		printf("\nError!! Re-initialization of already initialized queue!");
+		//printf("\nError!! Re-initialization of already initialized queue!");
 	}
 }
 
@@ -117,24 +117,28 @@ void mythread_enq(mythread_queue_t *headp, void *item){
 	}
 	if(*headp == *mythread_readyq())
 	{
-		printf("\nEnqueued in ready queue. Queue:");
-		printQueue(headp);
+		//printf("\nEnqueued in ready queue. Queue:");
+		//printQueue(headp);
 	}
 	else if(*headp == *mythread_runq())
 	{
-		printf("\nEnqueued in run queue. Queue:");
-		printQueue(headp);
+		//printf("\nEnqueued in run queue. Queue:");
+		//printQueue(headp);
 	}
 	else
 	{
-		printf("\nEnqueued in some other queue");
-		printQueue(headp);
+		//printf("\nEnqueued in some other queue");
+		//printQueue(headp);
 	}
 }
 
 /* Remove element from the queue */
 void mythread_deq(mythread_queue_t *headp, void *item)
 {
+	if(*headp == *mythread_runq())
+	{
+		//printf("\nDequeue item from run queue:%d",((mythread_t)item)->tid);
+	}
 	mythread_queue_t iter;
 	iter = *headp;
 	while(iter!=NULL)
@@ -161,7 +165,7 @@ void mythread_deq(mythread_queue_t *headp, void *item)
 				(iter->prev)->next = iter->next;
 				(iter->next)->prev = iter->prev;
 			}
-			free(iter);
+			//free(iter);
 			break;
 		}
 		iter = iter->next;
@@ -181,7 +185,7 @@ void *mythread_deq_prio(mythread_queue_t *headp)
 		printf("\nReturning NULL\n");
 		return NULL;
 	}
-	returnValue = (void*) highestPriorityItem->item;
+	returnValue = highestPriorityItem->item;
 	return returnValue;
 }
 

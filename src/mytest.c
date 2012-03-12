@@ -17,13 +17,18 @@ void* threadFun(void * arg)
 	for(i =0; i < 99999; ++i);
 	//printf("\nStill working ID:%d",mythread_self()->tid);
 	for(i =0; i < 99999; ++i);	
-	sleep(2);
+	//sleep(2);
+	//while(1)
+//	{
+//		;//printf("Infinite!!");
+//	}
 	//printStuff();
+	printStuff();
 	//printf("\nStill working ID:%d",mythread_self()->tid);
 	for(i =0; i < 99999; ++i);
 	//printf("\nStill working ID:%d",mythread_self()->tid);
 	for(i =0; i < 99999; ++i);
-	sleep(2);
+	//sleep(2);
 	printf("\n-------------Done thread Fun!:%d",mythread_self()->tid);
 	mythread_mutex_lock(&m);
 		sum = sum +1;
@@ -44,15 +49,15 @@ int main()
 		mythread_attr_init(&attr[i]);
 		mythread_attr_setschedparam(&attr[i],&param);
 		mythread_create(&tid[i],&attr[i], threadFun,i);
-		if(i == 5)
-			break;	
+		if(i == 5);
+		//	break;	
 		printf("Tester:created thread %d\n",tid[i]->tid);
 	}
 	for(i = 0; i < 20; ++i)
 	{
 		mythread_join(tid[i],NULL);
-		if(i==5)
-			break;
+		if(i==5);
+		//	break;
 	}
 	printf("\nSum = %d",sum);
 	printStuff();

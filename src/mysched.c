@@ -1,3 +1,8 @@
+/* Group Info - 
+asriram Arun Sriraman
+shyamp Shyam Prasad
+vineet Vineet Krishnan
+*/
 #include "sched.h"
 #include "mythread.h"
 #include <stdio.h>
@@ -13,17 +18,26 @@ sigset_t oldSet, newSet;
 struct itimerval value;
 static bool _isInit = false;
 
+/*
+* Init method
+*/
 int mythread_attr_init(mythread_attr_t *attr)
 {
         attr->attr = DEFAULT_ATTR;
         return 0;
 }
 
+/*
+ * Destroy method
+ */
 int mythread_attr_destroy(mythread_attr_t *attr)
 {
         attr->attr = -1;
         return 0;
 }
+/*
+ * Get priority
+ */
 int mythread_attr_getschedparam(const mythread_attr_t *attr, struct sched_param *param)
 {
 	if(attr == NULL ||  param == NULL)
@@ -31,6 +45,9 @@ int mythread_attr_getschedparam(const mythread_attr_t *attr, struct sched_param 
         param->__sched_priority = attr->attr;
         return 0;
 }
+/*
+ * Set priority
+ */
 int mythread_attr_setschedparam(mythread_attr_t *attr, const struct sched_param *param)
 {
 	if(attr == NULL || param == NULL)
@@ -39,41 +56,46 @@ int mythread_attr_setschedparam(mythread_attr_t *attr, const struct sched_param 
         return 0;
 }
 
-
+/* scheduler - schedule thread if reschedule flag is set to 1
+ */
 static int mythread_scheduler()
 {
 	mythread_t mytcb = mythread_self();
 	if(mytcb->reschedule == 1)
 	{
 		mythread_queue_t readyQueue = *mythread_readyq();
-		if(readyQueue == NULL)
+		if(readyQueue != NULL)
+		{
+			mythread_t highPrioItem = (mythread_t) mythread_deq_prio(&readyQueue);
+			if(highPrioItem->attribute == NULL)
+			{
+				highPrioItem->attribute = malloc(sizeof(mythread_attr_t));
+				highPrioItem->attribute->attr = DEFAULT_ATTR;
+			}
+			if(mytcb->attribute == NULL)
+			{
+				mytcb->attribute = malloc(sizeof(mythread_attr_t));
+				mytcb->attribute->attr = DEFAULT_ATTR;
+			}
+			if(mytcb->attribute->attr >= highPrioItem->attribute->attr)
+			{
+				mytcb->reschedule = 0;
+				mythread_block(mythread_readyq(), 1);
+				return 0;
+			}
+		}
+		else
 		{
 			mytcb->reschedule = 0;
-			mythread_leave_kernel_nonpreemptive();
-			return 0;
-		}
-		mythread_t highPrioItem = (mythread_t) mythread_deq_prio(&readyQueue);
-		if(highPrioItem->attribute == NULL)
-		{
-			highPrioItem->attribute = malloc(sizeof(mythread_attr_t));
-			highPrioItem->attribute->attr = DEFAULT_ATTR;
-		}
-		if(mytcb->attribute == NULL)
-		{
-			mytcb->attribute = malloc(sizeof(mythread_attr_t));
-			mytcb->attribute->attr = DEFAULT_ATTR;
-		}
-		if(mytcb->attribute->attr >= highPrioItem->attribute->attr)
-		{
-			mytcb->reschedule = 0;
-			mythread_block(mythread_readyq(), 1);
-			return 0;
 		}
 	}
 	mythread_leave_kernel_nonpreemptive();
 	return -1;
 }
 
+/*
+ * signal handler - catches signal - SIGUSR1 and SIGVTALRM
+ */
 static void mythread_sighandler(int sig, siginfo_t *siginfo, void *ucp)
 {
 	mythread_t mytcb = mythread_self();
@@ -94,7 +116,7 @@ static void mythread_sighandler(int sig, siginfo_t *siginfo, void *ucp)
 		}
 		if(present == false)
 		{
-			printf("\n---HERE");
+			//printf("\n---HERE");
 			mythread_leave_kernel_nonpreemptive();
 			return;
 		}
@@ -120,6 +142,9 @@ static void mythread_sighandler(int sig, siginfo_t *siginfo, void *ucp)
 	}
 }
 
+/*
+ * Set masks and timer
+ */
 void mythread_init_sched(void)
 {
 	newAction.sa_sigaction = mythread_sighandler;
@@ -150,6 +175,9 @@ void mythread_exit_sched()
 	sigprocmask(SIG_BLOCK, &oldSet, NULL);
 }
 
+/*
+ * Leave kernel method - call non-preemptive.
+ */
 void mythread_leave_kernel()
 {
 	mythread_t mytcb = mythread_self();

@@ -1,85 +1,89 @@
+/* Group Info - 
+asriram Arun Sriraman
+shyamp Shyam Prasad
+vineet Vineet Krishnan
+*/
 #include <stdio.h>
 #include <stdlib.h>
 #include "mythread.h"
 #include "mysched.h"
 #include "mymutex.h"
-//#include <sched.h>
 
+#define MAX_NUM_THREADS 20
 mythread_mutex_t m;
 int sum = 0;
+int TCnum = 0;
+int TC_PASSED = 1;
 
 void* threadFun(void * arg)
 {
-	int i=1;
-	//printf("\nStart thread Fun! ID:%d",mythread_self()->tid);
+	int i=1, j;
+	struct sched_param param;
+	mythread_t thisThread = mythread_self();
 	for(i =0; i < 99999; ++i);
-	//printf("\nStill working ID:%d",mythread_self()->tid);
 	for(i =0; i < 99999; ++i);
-	//printf("\nStill working ID:%d",mythread_self()->tid);
 	for(i =0; i < 99999; ++i);	
-	//sleep(2);
-//	while(1)
-//	{
-//		;//printf("Infinite!!");
-//	}
-//	i
 	for(i = 0; i < 60000; ++i)
 	{
-		int j;
-		for(j=0;j<2000; ++j)
-		{
-			/*int k;
-			for(k=0; k<99999; ++k)
-			{
-				int l;
-				for(l=0; l < 99999; ++l);
-			}*/
-		}
+		for(j=0; j<200; ++j);
 	}
-	//mythread_mutex_lock(&m);
-	//printStuff();
-	//mythread_mutex_unlock(&m);
-	//printStuff();
-	//printf("\nStill working ID:%d",mythread_self()->tid);
 	for(i =0; i < 99999; ++i);
-	//printf("\nStill working ID:%d",mythread_self()->tid);
 	for(i =0; i < 99999; ++i);
-	//sleep(2);
-	printf("\n-------------Done thread Fun!:%d",mythread_self()->tid);
+	if(TCnum == 1)
+	{
+		mythread_attr_getschedparam(thisThread->attribute, &param);
+		if(param.__sched_priority != (thisThread->attribute)->attr)
+			TC_PASSED = 0;
+	}
 	mythread_mutex_lock(&m);
 		sum = sum +1;
 	mythread_mutex_unlock(&m);
+	printf("\t\tThread Exiting !: %d\n",thisThread->tid);
 }
 
 int main()
 {
-	mythread_t tid[20];
-	int i;
+	mythread_t tid[MAX_NUM_THREADS];
 	struct sched_param param;
-	mythread_attr_t attr[20];
+	mythread_attr_t attr[MAX_NUM_THREADS];
+	int i;
+	
 	mythread_setconcurrency(2);
 	mythread_mutex_init(&m);
-	for(i = 0; i < 20; ++i)
+	printf("\nTest 1-> checking for \"sum\" with %d threads having dafault priority\n");
+	for(i = 0; i < MAX_NUM_THREADS; ++i)
 	{
-		//param.__sched_priority = (i%2 ==0 ?  i:3);
-		param.__sched_priority = 10;
+		mythread_attr_setschedparam(&attr[i], &param);
+		mythread_create(&tid[i],&attr[i], threadFun, NULL);
+	}
+
+	for(i = 0; i < MAX_NUM_THREADS; ++i)
+	{
+		mythread_join(tid[i],NULL);
+	}
+
+	if(sum == MAX_NUM_THREADS)
+		printf("\nTest 1: PASSED\n");
+	else 
+		printf("\nTest 1: FAILED\n");
+	sum = 0;
+
+	printf("\nTest 2-> checking for \"sum\" with %d threads with every odd thread having priority = 1 and even thread even priorities\n");
+	for(i = 0; i < MAX_NUM_THREADS; ++i)
+	{
+		param.__sched_priority = (i % 2 == 0 ? i : 1);
 		mythread_attr_init(&attr[i]);
-		mythread_attr_setschedparam(&attr[i],&param);
-		mythread_create(&tid[i],&attr[i], threadFun,i);
-		if(i == 5);
-		//	break;	
-		printf("Tester:created thread %d\n",tid[i]->tid);
+		mythread_attr_setschedparam(&attr[i], &param);
+		mythread_create(&tid[i],&attr[i], threadFun,NULL);
 	}
-	//printStuff();
-	for(i = 0; i < 20; ++i)
+	for(i = 0; i < MAX_NUM_THREADS; ++i)
 	{
-	mythread_join(tid[i],NULL);
-		if(i==5);
-		//	break;
+		mythread_join(tid[i], NULL);
 	}
-//	mythread_exit(NULL);
-	printf("\nSum = %d",sum);
-	//sleep(2);
-	//printStuff();
+	
+	if(sum == MAX_NUM_THREADS && TC_PASSED == 1)
+		printf("\nTest 2: PASSED\n");
+	else 
+		printf("\nTest 2: FAILED\n");
 	return 0;
 }

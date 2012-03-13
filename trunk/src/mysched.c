@@ -63,10 +63,10 @@ static int mythread_scheduler()
 			mytcb->attribute = malloc(sizeof(mythread_attr_t));
 			mytcb->attribute->attr = DEFAULT_ATTR;
 		}
-		if(mytcb->attribute->attr > highPrioItem->attribute->attr)
+		if(mytcb->attribute->attr >= highPrioItem->attribute->attr)
 		{
 			mytcb->reschedule = 0;
-			mythread_block(&readyQueue, 1);
+			mythread_block(mythread_readyq(), 1);
 			return 0;
 		}
 	}
@@ -77,17 +77,36 @@ static int mythread_scheduler()
 static void mythread_sighandler(int sig, siginfo_t *siginfo, void *ucp)
 {
 	mythread_t mytcb = mythread_self();
-	if(mythread_tryenter_kernel() == true)
+	if(mythread_tryenter_kernel())
 	{
+		// Check if signal got by thread in run q. if not, don't do anytihng
+		mythread_queue_t runQ = *mythread_runq();
+		bool present = false;
+		while(runQ!=NULL)
+		{
+			if(mytcb->tid == ((mythread_t)runQ->item)->tid)
+			{
+				//printf("-\n--- HERE--");
+				present = true;
+				break;
+			}
+			runQ=runQ->next;
+		}
+		if(present == false)
+		{
+			printf("\n---HERE");
+			mythread_leave_kernel_nonpreemptive();
+			return;
+		}
+		// If sigalarm, send SIGUSR1 to other threads. call scheduler
 		if(sig == SIGVTALRM)
 		{
 			//printf("\nAlarm received by:%d",mytcb->tid);
 			mythread_queue_t runQueue = *mythread_runq();
 			while(runQueue!=NULL)
-			{
-				pid_t tid = ((mythread_t)runQueue->item)->tid;
-				if(mytcb->tid != tid)
-					syscall(SYS_tkill,tid, SIGUSR1);
+			{	mythread_t item = (mythread_t) runQueue->item;
+				if(mytcb->tid != item->tid)
+					syscall(SYS_tkill,item->tid, SIGUSR1);
 				runQueue=runQueue->next; 
 			}
 		}
@@ -96,17 +115,16 @@ static void mythread_sighandler(int sig, siginfo_t *siginfo, void *ucp)
 	}
 	else
 	{
+		// Unable to enter kernel. Set flag and quit.
 		mytcb->reschedule = 1;
 	}
 }
-
 
 void mythread_init_sched(void)
 {
 	newAction.sa_sigaction = mythread_sighandler;
 	sigemptyset(&newAction.sa_mask);
 	newAction.sa_flags |= SA_RESTART | SA_SIGINFO;
-	
 	sigemptyset(&newSet);
 	sigaddset(&newSet,SIGUSR1);
 	sigaddset(&newSet,SIGVTALRM);
@@ -128,11 +146,8 @@ void mythread_init_sched(void)
 
 void mythread_exit_sched()
 {
-	sigset_t sigMask;
-	sigemptyset(&sigMask);
-	sigaddset(&sigMask,SIGUSR1);
-	sigaddset(&sigMask,SIGVTALRM);
-	sigprocmask(SIG_BLOCK, &sigMask, NULL);
+	// Restore old signal mask
+	sigprocmask(SIG_BLOCK, &oldSet, NULL);
 }
 
 void mythread_leave_kernel()

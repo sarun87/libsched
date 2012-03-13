@@ -26,7 +26,7 @@ void* threadFun(void * arg)
 	for(i = 0; i < 60000; ++i)
 	{
 		int j;
-		for(j=0;j<200; ++j)
+		for(j=0;j<2000; ++j)
 		{
 			/*int k;
 			for(k=0; k<99999; ++k)
@@ -36,9 +36,9 @@ void* threadFun(void * arg)
 			}*/
 		}
 	}
-	mythread_mutex_lock(&m);
-	printStuff();
-	mythread_mutex_unlock(&m);
+	//mythread_mutex_lock(&m);
+	//printStuff();
+	//mythread_mutex_unlock(&m);
 	//printStuff();
 	//printf("\nStill working ID:%d",mythread_self()->tid);
 	for(i =0; i < 99999; ++i);
@@ -57,7 +57,7 @@ int main()
 	int i;
 	struct sched_param param;
 	mythread_attr_t attr[20];
-	mythread_setconcurrency(3);
+	mythread_setconcurrency(2);
 	mythread_mutex_init(&m);
 	for(i = 0; i < 20; ++i)
 	{
@@ -79,6 +79,7 @@ int main()
 	}
 //	mythread_exit(NULL);
 	printf("\nSum = %d",sum);
+	//sleep(2);
 	//printStuff();
 	return 0;
 }

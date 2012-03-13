@@ -8,7 +8,7 @@ void printQueue(mythread_queue_t *headp)
 
 	if(*headp == NULL)
 	{
-		printf("\nQueue Empty!\n");
+		//printf("\nQueue Empty!!\n");
 		return;
 	}
 	while (curr != NULL)
@@ -34,19 +34,15 @@ mythread_queue_t getMaxPriorityThread(mythread_queue_t *headp)
 	mythread_queue_t highestPriorityItem = NULL;
 	if(*headp == NULL)
 	{
-		printf("\nQueue Empty!!\n");
+		//printf("\n--ERROR--Queue Empty!!\n");
 		return NULL;
 	}
-	int threadPriority = DEFAULT_ATTR;
 	while(iter!=NULL)
 	{	
+		int threadPriority = DEFAULT_ATTR;
 		if(((mythread_t)iter->item)->attribute != NULL)
 		{
 			threadPriority = (((mythread_t)iter->item)->attribute)->attr;
-		}
-		else
-		{
-			threadPriority = DEFAULT_ATTR;
 		}
 		if(threadPriority < highest)
 		{
@@ -81,7 +77,7 @@ void mythread_q_init(mythread_queue_t *headp, void *item)
 	}
 	else
 	{
-		printf("\nError!! Re-initialization of already initialized queue!");
+		//printf("\nError!! Re-initialization of already initialized queue!");
 	}
 }
 
@@ -121,18 +117,18 @@ void mythread_enq(mythread_queue_t *headp, void *item){
 	}
 	if(*headp == *mythread_readyq())
 	{
-		printf("\nEnqueued in ready queue. Queue:");
-		printQueue(headp);
+		//printf("\nEnqueued in ready queue. Queue:");
+		//printQueue(headp);
 	}
 	else if(*headp == *mythread_runq())
 	{
-		printf("\nEnqueued in run queue. Queue:");
-		printQueue(headp);
+		//printf("\nEnqueued in run queue. Queue:");
+		//printQueue(headp);
 	}
 	else
 	{
-		printf("\nEnqueued in some other queue");
-		printQueue(headp);
+		//printf("\nEnqueued in some other queue");
+		//printQueue(headp);
 	}
 }
 
